@@ -5,5 +5,5 @@ package helloworld
 
 // helloWorld returns "Hello world" in the chosen language.
 func helloWorld() string {
-	return "Hello world!"
+	return "Sawubona Mhlaba!"
 }

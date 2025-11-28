@@ -4,3 +4,9 @@ package factorial
 //go:generate go run ../../exercises-cli.go -student-id=$STUDENT_ID generate
 
 // INSERT YOUR CODE HERE
+func calcAbs(n int) int {
+	if n < 0 {
+		return -n
+	}
+	return n
+}

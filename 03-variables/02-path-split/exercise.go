@@ -6,3 +6,7 @@ import "path"
 //go:generate go run ../../exercises-cli.go -student-id=$STUDENT_ID generate
 
 // INSERT YOUR CODE HERE
+func splitPath(fullPath string) string {
+	dir, _ := path.Split(fullPath)
+	return dir
+}

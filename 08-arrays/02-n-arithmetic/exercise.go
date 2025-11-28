@@ -6,4 +6,9 @@ package narithmetic
 // nArithmetic returns the result of an arithmetic operation over "n" elements.
 func nArithmetic(elems [10]int) int {
 	// INSERT YOUR CODE HERE
+	result := 1
+	for _, v := range elems {
+		result *= v
+	}
+	return result
 }
