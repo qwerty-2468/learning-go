@@ -10,10 +10,8 @@ import (
 // DO NOT REMOVE THIS COMMENT
 //go:generate go run ../../exercises-cli.go -student-id=$STUDENT_ID generate
 
-// search reads a text and a word and returns true if the word appears in the text and false if it does not.
 func contain(reader io.Reader, word string) bool {
 	// INSERT YOUR CODE HERE
-	// read all text
 	buf := bufio.NewScanner(reader)
 	buf.Split(bufio.ScanLines)
 
@@ -24,7 +22,6 @@ func contain(reader io.Reader, word string) bool {
 	}
 	text := sb.String()
 
-	// remove punctuation, keep letters/digits and spaces
 	re := regexp.MustCompile(`[^a-zA-Z0-9 ]+`)
 	text = re.ReplaceAllString(text, " ")
 

@@ -9,16 +9,14 @@ import (
 	"sync"
 )
 
-// ChannelMultiplex multiplexes multiple input channels into a single output channel.
-func ChannelMultiplex(ctx context.Context, inputs []chan any) chan any {
-	out := make(chan any) // unbuffered; callers can wrap with buffering if needed
+func channelMultiplex(ctx context.Context, inputs []chan any) chan any {
+	out := make(chan any)
 
 	var wg sync.WaitGroup
 	wg.Add(len(inputs))
 
-	// Start one goroutine per input channel.
 	for _, ch := range inputs {
-		in := ch // capture loop variable
+		in := ch 
 		go func() {
 			defer wg.Done()
 			for {
@@ -33,14 +31,12 @@ func ChannelMultiplex(ctx context.Context, inputs []chan any) chan any {
 					case <-ctx.Done():
 						return
 					case out <- v:
-						// delivered
 					}
 				}
 			}
 		}()
 	}
 
-	// Close output when all readers are done or context is cancelled.
 	go func() {
 		wg.Wait()
 		close(out)

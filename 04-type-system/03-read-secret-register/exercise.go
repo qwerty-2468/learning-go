@@ -11,6 +11,5 @@ func parseChannelControlRegister(charCtrl uint32) (uint8, uint8, uint8, uint8) {
 	rxChan := uint8((charCtrl >> 8) & 0xFF)
 	txChan := uint8(charCtrl & 0xFF)
 
-	// Return in order: TX_CHAN, RX_CHAN, RX_PCODE, TX_PCODE
 	return txChan, rxChan, rxPcode, txPcode
 }

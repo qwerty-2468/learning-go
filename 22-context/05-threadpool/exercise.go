@@ -34,9 +34,7 @@ func NewThreadPool(n int) (ThreadPool, chan error) {
 	p := &threadPool{
 		ctx:    ctx,
 		cancel: cancel,
-		// buffered so Run() is non-blocking but still bounded
 		tasks: make(chan Runnable, n),
-		// buffered to avoid blocking on error reporting
 		errCh: make(chan error, n*2),
 	}
 
@@ -62,7 +60,6 @@ func (p *threadPool) worker() {
 			if r == nil {
 				continue
 			}
-			// RUN TASK HERE, inside worker goroutine
 			if err := r.Run(p.ctx); err != nil {
 				select {
 				case p.errCh <- err:
@@ -74,7 +71,6 @@ func (p *threadPool) worker() {
 	}
 }
 
-// Run submits a task; it must NOT start a new goroutine.
 func (p *threadPool) Run(r Runnable) {
 	select {
 	case <-p.ctx.Done():

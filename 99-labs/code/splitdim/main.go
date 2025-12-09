@@ -1,13 +1,18 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
-	"splitdim/pkg/api"
-	"splitdim/pkg/db/local"
-	"splitdim/pkg/db/kvstore"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"splitdim/pkg/api"
+	"splitdim/pkg/db/kvstore"
+	"splitdim/pkg/db/local"
 )
 
 // KVStoreMode defines the data layer mode (local/redis/kvstore).
@@ -111,28 +116,28 @@ func ResetHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	if os.Getenv("KVSTORE_MODE") != "" {
-        KVStoreMode = os.Getenv("KVSTORE_MODE")
-    }
-    if os.Getenv("KVSTORE_ADDR") != "" {
-        KVStoreAddr = os.Getenv("KVSTORE_ADDR")
-    }
+		KVStoreMode = os.Getenv("KVSTORE_MODE")
+	}
+	if os.Getenv("KVSTORE_ADDR") != "" {
+		KVStoreAddr = os.Getenv("KVSTORE_ADDR")
+	}
 
-    switch KVStoreMode {
-    case "kvstore":
-        log.Printf("Using the kvstore datalayer using at %q", KVStoreAddr)
-        db = kvstore.NewDataLayer(KVStoreAddr)
-    case "local":
-        fallthrough
-    default:
-        log.Println("Using the local datalayer")
-        db = local.NewDataLayer()
-    }
+	switch KVStoreMode {
+	case "kvstore":
+		log.Printf("Using the kvstore datalayer using at %q", KVStoreAddr)
+		db = kvstore.NewDataLayer(KVStoreAddr)
+	case "local":
+		fallthrough
+	default:
+		log.Println("Using the local datalayer")
+		db = local.NewDataLayer()
+	}
 
-    // Set the default logger to a fancier log format.
-    log.SetFlags(log.LstdFlags | log.Lshortfile)
+	// Set the default logger to a fancier log format.
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-    http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-    http.ServeFile(w, r, "static/index.html")
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/index.html")
 	})
 
 	http.HandleFunc("/api/transfer", TransferHandler)
@@ -140,6 +145,24 @@ func main() {
 	http.HandleFunc("/api/clear", ClearHandler)
 	http.HandleFunc("/api/reset", ResetHandler)
 
-	log.Println("Server listening on http://:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil)) 
+	server := &http.Server{Addr: ":8080"}
+
+	go func() {
+		log.Println("Server listening on http://:8080")
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen: %v", err)
+		}
+	}()
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	<-sigChan
+	log.Println("Shutdown signal received, waiting for in-flight requests")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		log.Printf("Server shutdown error: %v", err)
+	}
 }

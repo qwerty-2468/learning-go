@@ -8,9 +8,9 @@ func multiplyDigits(n int) int {
 	prod := 1
 
 	for n > 0 {
-		d := n % 10   // last digit
-		prod *= d     // multiply into product
-		n /= 10       // drop last digit
+		d := n % 10   
+		prod *= d     
+		n /= 10      
 	}
 
 	return prod

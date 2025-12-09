@@ -9,7 +9,6 @@ import (
 	"sync"
 )
 
-// helper: test if n is prime
 func isPrime(n int) bool {
 	if n < 2 {
 		return false
@@ -22,7 +21,6 @@ func isPrime(n int) bool {
 	return true
 }
 
-// GeneratePrimes returns a sorted slice of primes <= n.
 func GeneratePrimes(n int) []int {
 	if n < 2 {
 		return []int{}
@@ -31,7 +29,6 @@ func GeneratePrimes(n int) []int {
 	var wg sync.WaitGroup
 	ch := make(chan int)
 
-	// worker: send primes to channel
 	for i := 2; i <= n; i++ {
 		wg.Add(1)
 		go func(x int) {
@@ -42,19 +39,16 @@ func GeneratePrimes(n int) []int {
 		}(i)
 	}
 
-	// closer
 	go func() {
 		wg.Wait()
 		close(ch)
 	}()
 
-	// collect
 	var primes []int
 	for p := range ch {
 		primes = append(primes, p)
 	}
 
-	// sort ascending
 	sort.Ints(primes)
 
 	return primes

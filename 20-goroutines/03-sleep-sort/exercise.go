@@ -8,7 +8,6 @@ import (
 	"time"
 )
 
-// reverseSleepSort returns the input uint-slice sorted in the reverse order.
 func reverseSleepSort(input []uint) []uint {
 	n := len(input)
 	if n == 0 {
@@ -18,9 +17,8 @@ func reverseSleepSort(input []uint) []uint {
 	out := make(chan uint, n)
 
 	for _, v := range input {
-		val := v // copy loop variable
+		val := v 
 		go func() {
-			// input is in [1,50]; reverse sleep: 500 - x*10 ms
 			delay := time.Duration(500-10*val) * time.Millisecond
 			time.Sleep(delay)
 			out <- val
@@ -31,6 +29,5 @@ func reverseSleepSort(input []uint) []uint {
 	for i := 0; i < n; i++ {
 		res = append(res, <-out)
 	}
-	// because larger numbers sleep less, they arrive first => already reverse-sorted
 	return res
 }

@@ -4,7 +4,6 @@ package pipeline
 //go:generate go run ../../exercises-cli.go -student-id=$STUDENT_ID generate
 
 // INSERT YOUR CODE HERE
-// generator takes an int slice and pushes its elements into an int channel.
 func generator(nums []int) <-chan int {
 	out := make(chan int)
 	go func() {
@@ -16,7 +15,6 @@ func generator(nums []int) <-chan int {
 	return out
 }
 
-// multiplier reads ints from `in`, multiplies each by 5, and sends float32 to a channel.
 func multiplier(in <-chan int) <-chan float32 {
 	out := make(chan float32)
 	go func() {
@@ -28,7 +26,6 @@ func multiplier(in <-chan int) <-chan float32 {
 	return out
 }
 
-// collector reads float32 values from `in` and collects them into a []float32.
 func collector(in <-chan float32) []float32 {
 	var result []float32
 	for v := range in {

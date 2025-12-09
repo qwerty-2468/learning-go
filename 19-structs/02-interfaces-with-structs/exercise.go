@@ -41,7 +41,6 @@ func NewMagazine(Title, Issue string, Pages int) Magazine {
 // 4. Implement Printable for Book and Magazine
 
 func (b Book) Info() string {
-	// all textual info (no page number), comma-separated
 	return fmt.Sprintf("%s, %s", b.Author, b.Title)
 }
 
@@ -50,7 +49,6 @@ func (b Book) PageNum() int {
 }
 
 func (m Magazine) Info() string {
-	// all textual info (no page number), comma-separated
 	return fmt.Sprintf("%s, %s", m.Title, m.Issue)
 }
 
