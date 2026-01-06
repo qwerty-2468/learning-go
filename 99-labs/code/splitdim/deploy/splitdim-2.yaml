@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: splitdim-2
+  labels:
+    app: splitdim-2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: splitdim-2
+  template:
+    metadata:
+      labels:
+        app: splitdim-2
+    spec:
+      containers:
+        - name: splitdim
+          image: localhost/splitdim
+          ports:
+            - containerPort: 8080
+          env:
+            - name: KVSTORE_MODE
+              valueFrom:
+                configMapKeyRef:
+                  name: splitdim-config
+                  key: kvstoreMode
+                  optional: true
+            - name: KVSTORE_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: splitdim-config
+                  key: kvstoreAddr
+                  optional: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: splitdim-2
+  labels:
+    app: splitdim-2
+spec:
+  selector:
+    app: splitdim-2
+  ports:
+    - name: "http-splitdim-2"
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+  type: ClusterIP

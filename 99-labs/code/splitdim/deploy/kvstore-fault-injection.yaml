@@ -1,0 +1,12 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata: { name: kvstore-500 }
+spec:
+  hosts: [kvstore]
+  http:
+    # requests to the "/api/clear" path will return 500 status every 10th time
+    - match: [uri: { exact: "/api/list" }]
+      fault: { abort: { httpStatus: 500, percentage: { value: 10 } } }
+      route: [destination: { host: kvstore }]
+    # default route: everything that is not a "put" ("list" and "get")
+    - route: [destination: { host: kvstore }]
