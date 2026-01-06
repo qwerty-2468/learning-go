@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"flag"
 	"os"
 	"os/signal"
 	"syscall"
@@ -19,7 +20,8 @@ import (
 var KVStoreMode = "local"
 
 // KVStoreAddr stores the key-value store address as a DNS domain name or IP address.
-var KVStoreAddr = "localhost:8001"
+// Default fallback used when neither environment variable nor CLI arg is provided.
+var KVStoreAddr = "localhost:8081"
 
 var db api.DataLayer
 
@@ -115,12 +117,23 @@ func ResetHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	if os.Getenv("KVSTORE_MODE") != "" {
-		KVStoreMode = os.Getenv("KVSTORE_MODE")
+	// CLI flags with sensible defaults from environment variables.
+	defMode := os.Getenv("KVSTORE_MODE")
+	if defMode == "" {
+		defMode = "local"
 	}
-	if os.Getenv("KVSTORE_ADDR") != "" {
-		KVStoreAddr = os.Getenv("KVSTORE_ADDR")
+	defAddr := os.Getenv("KVSTORE_ADDR")
+	if defAddr == "" {
+		defAddr = "localhost:8081"
 	}
+
+	modeFlag := flag.String("mode", defMode, "data-layer mode (local/kvstore)")
+	addrFlag := flag.String("addr", defAddr, "key-value store address (host:port)")
+	flag.Parse()
+
+	// Final settings: CLI flag takes precedence over environment variable.
+	KVStoreMode = *modeFlag
+	KVStoreAddr = *addrFlag
 
 	switch KVStoreMode {
 	case "kvstore":

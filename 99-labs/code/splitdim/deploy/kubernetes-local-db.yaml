@@ -19,6 +19,19 @@ spec:
           image: localhost/splitdim
           ports:
             - containerPort: 8080
+          env:
+            - name: KVSTORE_MODE
+              valueFrom:
+                configMapKeyRef:
+                  name: splitdim-config
+                  key: kvstoreMode
+                  optional: true
+            - name: KVSTORE_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: splitdim-config
+                  key: kvstoreAddr
+                  optional: true
 
 ---
 apiVersion: v1
