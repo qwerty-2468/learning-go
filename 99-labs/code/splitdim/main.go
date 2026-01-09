@@ -10,10 +10,12 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"fmt"
 
 	"splitdim/pkg/api"
 	"splitdim/pkg/db/kvstore"
 	"splitdim/pkg/db/local"
+	"resilient"
 )
 
 // KVStoreMode defines the data layer mode (local/redis/kvstore).
@@ -24,6 +26,10 @@ var KVStoreMode = "local"
 var KVStoreAddr = "localhost:8081"
 
 var db api.DataLayer
+
+var RLCtx, RLCancel = context.WithCancel(context.Background())
+var	rateLimiter = resilient.RateLimiter{ Capacity: 1, Fill: 1, Period: 5000 * time.Millisecond}
+var limited resilient.Closure
 
 // TransferHandler is a HTTP handler that implements the money transfer API.
 func TransferHandler(w http.ResponseWriter, r *http.Request) {
@@ -60,20 +66,34 @@ func AccountListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Printf("%s %s", r.Method, r.RequestURI)
-	accountList, err := db.AccountList()
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+
+	var accountList []api.Account
+	
+	if limited == nil {
+		limited = resilient.WithRateLimiter(func () error { var err error
+		accountList, err = db.AccountList()
+			return err
+		}, RLCtx, rateLimiter)
+
+	}
+	if err := limited(); err != nil {
+		fmt.Println(err)
+		if err.Error() == "Too many calls" {
+			w.WriteHeader(http.StatusTooManyRequests)
+			w.Write([]byte("Rate limit exceeded"))
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+		}
 		return
 	}
-	jsonData, err := json.Marshal(accountList)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonData)
+		jsonData, err := json.Marshal(accountList)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(jsonData)
 }
 
 // ClearHandler is a HTTP handler that returns a list of transfers to clear the balance of each user.
@@ -171,6 +191,8 @@ func main() {
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	<-sigChan
 	log.Println("Shutdown signal received, waiting for in-flight requests")
+
+	RLCancel()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
